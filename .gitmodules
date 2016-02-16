@@ -1,0 +1,3 @@
+[submodule "PHP-GIS-Wrapper"]
+	path = PHP-GIS-Wrapper
+	url = https://github.com/AIESECGermany/PHP-GIS-Wrapper.git
