@@ -18,7 +18,7 @@ $user = new \GIS\AuthProviderUser(GIS_USER, GIS_PW);
 $gis = new \GIS\GIS($user);
 
 // instantiate customer.io wrapper
-$cio = new \Narsic\Customerio\CustomerIO(API_KEY, SITE_ID);
+$cio = new CustomerIO(API_KEY, SITE_ID);
 
 $gis->people->filters->committee_scope = 677;
 foreach($gis->people as $p) {
