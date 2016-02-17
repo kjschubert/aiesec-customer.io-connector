@@ -4,3 +4,6 @@
 [submodule "customerio.php"]
 	path = customerio.php
 	url = https://github.com/kjschubert/customerio.php.git
+[submodule "KLogger"]
+	path = KLogger
+	url = https://github.com/kjschubert/KLogger.git
