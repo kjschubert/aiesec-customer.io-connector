@@ -1,4 +1,12 @@
 <?php
+
+/**
+ * Class Lock
+ * Coordinates the locking and unlocking of the base directory
+ *
+ * @author: Karl Johann Schubert <karljohann@familieschubi.de>
+ * @version: 0.1
+ */
 class Lock {
 
         private static $_PID;
