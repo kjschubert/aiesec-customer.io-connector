@@ -27,7 +27,7 @@ class Lock {
                 if(self::$_PID == getmypid()) return TRUE;
 
                 // check if process is still running
-                if(self::isrunning()) {
+                if(self::running()) {
                     $log->info("AIESEC-Customer.io-Connector is still running with pid " . self::$_PID);
                     return FALSE;
                 } else {
