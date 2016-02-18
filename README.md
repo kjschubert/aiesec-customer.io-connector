@@ -62,6 +62,8 @@ The script is not running infinitely by itself. This design decision was made ba
 ```
 cd /opt
 git clone https://github.com/kjschubert/aiesec-customer.io-connector.git
+cd /opt/aiesec-customer.io-connector
+git submodule update --init --recursive
 ```
 * copy example config and adapt it
 ```

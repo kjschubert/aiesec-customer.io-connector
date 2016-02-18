@@ -46,12 +46,12 @@ class Person {
             "interviewed" => $p->interviewed,
             "photo" => $p->profile_photo_url,
             "status" => $p->status,
-            "cv" => $p->cv_url->url,
             "nps_score" => $p->nps_score,
             "can_apply" => $p->permissions->can_apply,
             "home_lc" => $p->home_lc->name,
             "home_lc_country" => $p->home_lc->country
         );
+        if(isset($p->cv_url)) $this->_userdate["cv"] = $p->cv_url->url;
 
         //check that id is valid
         if($this->_id < 1) {
