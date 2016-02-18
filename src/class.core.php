@@ -63,7 +63,6 @@ class Core {
      * @return void
      */
     function run() {
-        $this->_GIS->people->filters->committee_scope = 677;
         foreach($this->_GIS->people as $p) {
             $person = new Person($p, $this->_user, $this->_log);
             if($person) {
