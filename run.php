@@ -20,8 +20,8 @@ if(file_exists(BASE_PATH . '/config.php')) {
 
 // instantiate KLogger (we don't catch anything here, because we can not do anything about it)
 require_once(BASE_PATH . '/KLogger/load.php');
-$log = new \Katzgrau\KLogger\Logger(LOG);
-$log->info("AIESEC-Customer.io-Connector is starting.");
+$log = new \Katzgrau\KLogger\Logger(LOG, LOGLEVEL);
+$log->log(\Psr\Log\LogLevel::INFO, "AIESEC-Customer.io-Connector is starting.");
 
 // try to get lock
 require_once(BASE_PATH . '/src/class.lock.php');
@@ -30,7 +30,7 @@ $pid = Lock::lock($log);
 // check if we got the lock
 if($pid < 1) {
     // there is a problem or another process running. Shutdown...
-    $log->info("AIESEC-Customer.io-Connector didn't got the lock. This instance is shutting down...");
+    $log->log(\Psr\Log\LogLevel::INFO, "AIESEC-Customer.io-Connector didn't got the lock. This instance is shutting down...");
 } else {
     // we got the lock, so check that data directory is writeable
     if(!file_exists('./data') || !is_writeable('./data')) {
@@ -38,27 +38,18 @@ if($pid < 1) {
     }
 
     // require the core
-    require_once(BASE_PATH . '/class.core.php');
+    require_once(BASE_PATH . '/src/class.core.php');
 
     //try to run the core and sync once
     try {
         $core = new Core($log);
-        $core->run();
-
-        if(Lock::unlock($log)) {
-            $log->info("Sync run without unhandled Exceptions and we released to lock successfully");
-        } else {
-            $log->warning("Sync run without unhandled Exceptions but we couldn't release the lock. You definitely have to look into this!");
-        }
+        if($core) $core->run();
     } catch(Exception $e) {
         // catch all Exception to release the lock before dying.
-        $log->error("We encountered an unhandled Exception: " . $e->getMessage(), $e->getTrace());
-
-        if(Lock::unlock($log)) {
-            $log->info("We are dying, but we released to lock successfully");
-        } else {
-            $log->warning("We are dying and couldn't release the lock. You definitely have to look into this!");
-        }
+        $log->log(\Psr\Log\LogLevel::ERROR, "We encountered an unhandled Exception: " . $e->getMessage(), (array)$e->getTrace());
     }
+
+    // unlock the base directory
+    Lock::unlock($log);
 }
 

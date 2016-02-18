@@ -36,10 +36,10 @@ class Lock {
 
                 // check if process is still running
                 if(self::running()) {
-                    $log->info("AIESEC-Customer.io-Connector is still running with pid " . self::$_PID);
+                    $log->log(\Psr\Log\LogLevel::INFO, "AIESEC-Customer.io-Connector is still running with pid " . self::$_PID);
                     return FALSE;
                 } else {
-                    $log->error("AIESEC-Customer.io-Connector died. Please look into this accident and then manually delete the .lock-file");
+                    $log->log(\Psr\Log\LogLevel::ERROR, "AIESEC-Customer.io-Connector died. Please look into this accident and then manually delete the .lock-file");
                     die();
                 }
             } else {
@@ -53,14 +53,14 @@ class Lock {
 
                     // check that we really got the lock
                     if(self::$_PID == file_get_contents($lock_file)) {
-                        $log->info("Process " . self::$_PID . " locked the base directory");
+                        $log->log(\Psr\Log\LogLevel::INFO, "Process " . self::$_PID . " locked the base directory");
                         return self::$_PID;
                     } else {
-                        $log->warning("Some process overwrote the lock for process " . self::$_PID);
+                        $log->log(Psr\Log\LogLevel::WARNING, "Some process overwrote the lock for process " . self::$_PID);
                         return FALSE;
                     }
                 } else {
-                    $log->error("Couldn't write lock-file. Please make the base directory writeable for the php process");
+                    $log->log(\Psr\Log\LogLevel::ERROR, "Couldn't write lock-file. Please make the base directory writeable for the php process");
                 }
             }
         }
@@ -73,14 +73,14 @@ class Lock {
                 if(file_get_contents($lock_file) == self::$_PID) {
                     // release the lock
                     if(unlink($lock_file)) {
-                        $log->info("Process" . self::$_PID . " released the lock");
+                        $log->log(\Psr\Log\LogLevel::INFO, "Process" . self::$_PID . " released the lock");
                         return true;
                     } else {
-                        $log->error("Process" . self::$_PID . " could NOT releas the lock");
+                        $log->log(\Psr\Log\LogLevel::ERROR, "Process" . self::$_PID . " could NOT release the lock");
                         return false;
                     }
                 } else {
-                    $log->error("Process" . self::$_PID . " wanted to release the lock but didn't had it");
+                    $log->log(\Psr\Log\LogLevel::ERROR, "Process" . self::$_PID . " wanted to release the lock but didn't had it");
                     return false;
                 }
             }
