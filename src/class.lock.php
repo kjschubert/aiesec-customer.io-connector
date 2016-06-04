@@ -5,7 +5,7 @@
  * Coordinates the locking and unlocking of the base directory
  *
  * @author: Karl Johann Schubert <karljohann@familieschubi.de>
- * @version: 0.1
+ * @version: 0.2
  */
 class Lock {
 

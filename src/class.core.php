@@ -1,15 +1,10 @@
 <?php
-require_once(BASE_PATH . '/PHP-GIS-Wrapper/gis-wrapper/AuthProviderUser.php');
-require_once(BASE_PATH . '/PHP-GIS-Wrapper/gis-wrapper/GIS.php');
-require_once(BASE_PATH . '/customerio.php/CustomerIO.php');
-require_once(BASE_PATH . '/src/class.person.php');
-
 /**
  * Class Core
  * Core of the AIESEC-Customer.io-Connector
  *
  * @author Karl Johann Schubert <karljohann@familieschubi.de>
- * @version 0.1
+ * @version 0.2
  */
 class Core {
 
@@ -31,8 +26,8 @@ class Core {
 
         // instantiate connection to GIS
         try {
-            $this->_user = new \GIS\AuthProviderUser(GIS_USER, GIS_PW);
-            $this->_GIS = new \GIS\GIS($this->_user);
+            $this->_user = new GISwrapper\AuthProviderEXPA(GIS_USER, GIS_PW);
+            $this->_GIS = new \GISwrapper\GIS($this->_user);
         } catch (Exception $e) {
             $log->log(\Psr\Log\LogLevel::ERROR, "Could not connect to GIS: " . $e->getMessage(), (array)$e->getTrace());
             return false;
@@ -64,11 +59,11 @@ class Core {
      */
     function run() {
         foreach($this->_GIS->people as $p) {
-            $person = new Person($p, $this->_user, $this->_log);
+            $person = new Person($p, $this->_GIS, $this->_log);
             if($person) {
                 if($person->updateData($this->_CIO)) {
                     // we only trigger the events if we updated the user data completely successfully, but not even if we only could not save the userdata on disk, because thereby the risks occurs that we can not save the events on disk and then we will send them again
-                    $person->triggerEvents($this->_CIO, $this->_GIS, $this->_uid);
+                    $person->triggerEvents($this->_CIO, $this->_uid);
                 }
             } else {
                 $this->_log->log(\Psr\Log\LogLevel::DEBUG, "Skipped person", (array)$p);

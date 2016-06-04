@@ -1,0 +1,15 @@
+{
+    "require": {
+        "kjschubert/php-gis-wrapper": "^0.2.0",
+        "katzgrau/KLogger": "^1.2",
+        "kjschubert/customerio.php": "^0.1.0"
+    },
+    "autoload" : {
+        "files" : [
+            "src/class.application.php",
+            "src/class.person.php",
+            "src/class.core.php",
+            "src/class.lock.php"
+        ]
+    }
+}

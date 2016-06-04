@@ -1,8 +1,9 @@
 <?php
-require_once(BASE_PATH . '/src/class.application.php');
-
 /**
  * Class Person
+ *
+ * @author Karl Johann Schubert <karljohann@familieschubi.de>
+ * @version 0.2
  */
 class Person {
 
@@ -22,16 +23,16 @@ class Person {
 
     private $_managers = array();
 
-    private $_GISAuth;
+    private $_GIS;
 
     /**
      * Person constructor.
      * @param $p        object with api response of this person
-     * @param $GISAuth  instance of GISAuthProvider
+     * @param $GIS  instance of GISAuthProvider
      * @param $log      instance of KLogger
      */
-    function __construct($p, $GISAuth, $log) {
-        $this->_GISAuth = $GISAuth;
+    function __construct($p, $GIS, $log) {
+        $this->_GIS = $GIS;
         $this->_log = $log;
 
         // retrieve needed userdata from GIS
@@ -51,7 +52,7 @@ class Person {
             "home_lc" => $p->home_lc->name,
             "home_lc_country" => $p->home_lc->country
         );
-        if(isset($p->cv_url)) $this->_userdate["cv"] = $p->cv_url->url;
+        if(isset($p->cv_url)) $this->_userdata["cv"] = $p->cv_url->url;
 
         //check that id is valid
         if($this->_id < 1) {
@@ -106,7 +107,7 @@ class Person {
                     $this->_log->log(\Psr\Log\LogLevel::DEBUG, "Updated user on customer.io", array($this->_id, (array)$this->_userdata));
                     return $this->saveUserdata();
                 } else {
-                    $this->_log->log(\Psr\Log\LogLevel::WARNING, "Could NOT update userdata on customer.io! UID: " . $this->id . ", Code: " . $cio->errorCode . ", Message: " . $cio->errorMessage);
+                    $this->_log->log(\Psr\Log\LogLevel::WARNING, "Could NOT update userdata on customer.io! UID: " . $this->_id . ", Code: " . $cio->errorCode . ", Message: " . $cio->errorMessage);
                     return false;
                 }
             }
@@ -117,7 +118,7 @@ class Person {
                 $this->_log->log(\Psr\Log\LogLevel::DEBUG, "Added user to customer.io", array($this->_id, $this->_email, $this->_created_at, (array)$this->_userdata));
                 return $this->saveUserdata();
             } else {
-                $this->_log->log(\Psr\Log\LogLevel::WARNING, "Could NOT send userdata to customer.io! UID: " . $this->id . ", Code: " . $cio->errorCode . ", Message: " . $cio->errorMessage);
+                $this->_log->log(\Psr\Log\LogLevel::WARNING, "Could NOT send userdata to customer.io! UID: " . $this->_id . ", Code: " . $cio->errorCode . ", Message: " . $cio->errorMessage);
                 return false;
             }
         }
@@ -138,14 +139,13 @@ class Person {
 
     /*
      * @param $cio  Instance of customer.io wrapper
-     * @param $gis  Instance of GIS wrapper
      * @param $uid  uid of GIS Bot
      */
-    function triggerEvents($cio, $gis, $uid) {
+    function triggerEvents($cio, $uid) {
         // instantiate all applications, divide in those who need meta informations and those who don't
         $applications = array();
         $metaapplications = array();
-        foreach($gis->people->{'_' . $this->_id}->applications as $a) {
+        foreach($this->_GIS->people[$this->_id]->applications as $a) {
             $application = new Application($a, $this->_id, $this->_log);
             if ($application) {
                 if ($application->needMeta()) {
@@ -172,7 +172,7 @@ class Person {
 
             // retrieve all the metadata
             foreach($metaapplications as $application) {
-                if($application->setMeta( $gis->applications->{'_' . $application->getId()}->get()->meta )) {
+                if($application->setMeta( $this->_GIS->applications[$application->getId()]->get()->meta )) {
                     $applications[] = $application;
                 } else {
                     $this->_log->log(\Psr\Log\LogLevel::WARNING, "Could NOT get meta data for application " . $application->getId() . ". Skipping that application.");
@@ -191,7 +191,6 @@ class Person {
         // trigger the events for every application, but stop if we can not save the state of an application
         foreach($applications as $application) {
             $err = false;
-            if(!$application->hasEvent()) var_dump($application);
             while($application->hasEvent() && !$err) {
                 $application->nextEvent($cio);
                 $err = !$application->saveStatus();
@@ -202,52 +201,24 @@ class Person {
     /**
      * update the EP managers of this person
      * @param $managers array with the ids of the EP managers
+     * @return bool
      */
     private function updateEPmanagers($managers) {
-        // base url
-        $url = "https://gis-api.aiesec.org:443/v2/people/" . $this->_id . ".json?";
+        if(isset($this->_GIS->people[$this->_id])) unset($this->_GIS->people[$this->_id]);
 
-        // add ep manager argument to url
-        if(count($managers) > 0) {
-            foreach($managers as $m) {
-                $url .= "person%5Bmanager_ids%5D%5B%5D=" . $m . "&";
-            }
+        $this->_GIS->people[$this->_id]->person->manager_ids = $managers;
+        try {
+            $res = $this->_GIS->people[$this->_id]->person->update();
+        } catch(Exception $e) {
+            $this->_log->log(\Psr\Log\LogLevel::INFO, "Could not update the EP managers of user " . $this->_id .  ":" . $e);
+            return false;
+        }
+        if($res->managers == $managers) {
+            $this->_log->log(\Psr\Log\LogLevel::DEBUG, "Updated the EP managers of user " . $this->_id, (array)$res->managers);
+            return true;
         } else {
-            $url .= "person%5Bmanager_ids%5D&";
+            $this->_log->log(\Psr\Log\LogLevel::DEBUG, "Could not update the EP managers of user " . $this->_id, (array)$res);
+            return false;
         }
-
-        // initialize working variables
-        $success = false;
-        $i = 0;
-        $token = $this->_GISAuth->getToken();
-
-        // try up to 3 times to update the EP managers
-        while(!$success && $i < 3) {
-            $i++;
-            // send request with curl
-            $req = curl_init($url . "access_token=" . $token);
-            curl_setopt($req, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($req, CURLOPT_CUSTOMREQUEST, 'PATCH');
-            $res = json_decode(curl_exec($req));
-            curl_close($req);
-
-            // check response
-            if(isset($res->status) && isset($res->status->code)) {
-                if($res->status->code == "401") {
-                    $token = $this->_GISAuth->getNewToken();
-                } else {
-                    $this->_log->log(\Psr\Log\LogLevel::INFO, "GIS API responded with an error, while updating the EP managers of user " . $this->_id .  ":" . $res->status->code . " . " . $res->status->message . ". Attempt " . $i, array($url));
-                }
-            }
-            if(is_array($res->managers)) {
-                $this->_log->log(\Psr\Log\LogLevel::DEBUG, "Updated the EP managers of user " . $this->_id, (array)$res->managers);
-                $success = true;
-            } else {
-                echo $url;
-                var_dump($res);
-            }
-        }
-
-        return $success;
     }
 }

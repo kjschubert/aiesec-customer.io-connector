@@ -2,3 +2,5 @@
 config.php
 data/*
 logs
+/vendor/
+.lock

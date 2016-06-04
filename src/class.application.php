@@ -1,4 +1,11 @@
 <?php
+
+/**
+ * Class Application
+ *
+ * @author Karl Johann Schubert <karljohann@familieschubi.de>
+ * @version 0.2
+ */
 class Application {
 
     private $_id;

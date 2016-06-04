@@ -4,8 +4,11 @@
  * In this file the environment is checked and if possible the sync is started
  *
  * @author: Karl Johann Schubert <karljohann@familieschubi.de>
- * @version: 0.1
+ * @version: 0.2
  */
+
+// composer autoload
+require_once __DIR__ . '/vendor/autoload.php';
 
 // define the parent folder of this file as base path
 define("BASE_PATH", dirname(__FILE__));
@@ -19,12 +22,10 @@ if(file_exists(BASE_PATH . '/config.php')) {
 }
 
 // instantiate KLogger (we don't catch anything here, because we can not do anything about it)
-require_once(BASE_PATH . '/KLogger/load.php');
 $log = new \Katzgrau\KLogger\Logger(LOG, LOGLEVEL);
 $log->log(\Psr\Log\LogLevel::INFO, "AIESEC-Customer.io-Connector is starting.");
 
 // try to get lock
-require_once(BASE_PATH . '/src/class.lock.php');
 $pid = Lock::lock($log);
 
 // check if we got the lock
@@ -36,9 +37,6 @@ if($pid < 1) {
     if(!file_exists('./data') || !is_writeable('./data')) {
         die("data directory must be writeable");
     }
-
-    // require the core
-    require_once(BASE_PATH . '/src/class.core.php');
 
     //try to run the core and sync once
     try {

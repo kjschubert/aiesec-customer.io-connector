@@ -1,9 +1,0 @@
-[submodule "PHP-GIS-Wrapper"]
-	path = PHP-GIS-Wrapper
-	url = https://github.com/AIESECGermany/PHP-GIS-Wrapper.git
-[submodule "customerio.php"]
-	path = customerio.php
-	url = https://github.com/kjschubert/customerio.php.git
-[submodule "KLogger"]
-	path = KLogger
-	url = https://github.com/kjschubert/KLogger.git
