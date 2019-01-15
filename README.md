@@ -1,3 +1,5 @@
+**I wrote this script when I was an active member in AIESEC for a small prototype. It depends on kjschubert/PHP-GIS-Wrapper, which is not maintained anymore and doesn't support EXPA v3 and newer versions.**
+
 # AIESEC customer.io connector
 Author: Karl Johann Schubert <karljohann@familieschubi.de>
 
